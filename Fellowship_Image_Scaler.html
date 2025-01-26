@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Scaler</title>
+    <style>
+        #originalImage {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #scaledImage {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #croppedImage {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Scaler</h1>
+    <input type="file" accept="image/*" id="fileInput">
+    <h2>Original Image</h2>
+    <img id="originalImage" alt="Original Image">
+
+    <h2>Cropped Image (3840x2160 with edges removed)</h2>
+    <img id="croppedImage" alt="Cropped Image">
+
+    <div id="croppedButtonContainer"></div>
+
+    <h2>Scaled Image (3840x2160)</h2>
+    <img id="scaledImage" alt="Scaled Image">
+
+    <button id="saveScaledButton">Save Scaled Image</button>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                var originalImage = document.getElementById('originalImage');
+                var scaledImage = document.getElementById('scaledImage');
+                var croppedImage = document.getElementById('croppedImage');
+
+                originalImage.src = event.target.result;
+
+                var canvasOriginal = document.createElement('canvas');
+                var ctxOriginal = canvasOriginal.getContext('2d');
+
+                var imgOriginal = new Image();
+                imgOriginal.src = event.target.result;
+
+                imgOriginal.onload = function() {
+                    canvasOriginal.width = imgOriginal.width;
+                    canvasOriginal.height = imgOriginal.height;
+
+                    ctxOriginal.drawImage(imgOriginal, 0, 0);
+
+                    var canvasCropped = document.createElement('canvas');
+                    var ctxCropped = canvasCropped.getContext('2d');
+
+                    canvasCropped.width = 3840;
+                    canvasCropped.height = 2160;
+
+                    ctxCropped.drawImage(canvasOriginal, 536, 0, canvasOriginal.width - 1072, canvasOriginal.height, 0, 0, canvasCropped.width, canvasCropped.height);
+
+                    croppedImage.src = canvasCropped.toDataURL();
+
+                    var canvasScaled = document.createElement('canvas');
+                    var ctxScaled = canvasScaled.getContext('2d');
+
+                    canvasScaled.width = 3840;
+                    canvasScaled.height = 2160;
+
+                    ctxScaled.drawImage(canvasOriginal, 0, 0, canvasOriginal.width, canvasOriginal.height, 0, 0, canvasScaled.width, canvasScaled.height);
+
+                    scaledImage.src = canvasScaled.toDataURL();
+                }
+            }
+
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('saveScaledButton').addEventListener('click', function() {
+            var scaledImage = document.getElementById('scaledImage');
+            downloadImage(scaledImage.src, 'scaled_image.png');
+        });
+
+        // Creating the "Save Cropped Image" button and appending it below the Cropped Image
+        var saveCroppedButton = document.createElement('button');
+        saveCroppedButton.id = 'saveCroppedButton';
+        saveCroppedButton.textContent = 'Save Cropped Image';
+        saveCroppedButton.addEventListener('click', function() {
+            var croppedImage = document.getElementById('croppedImage');
+            downloadImage(croppedImage.src, 'cropped_image.png');
+        });
+        document.getElementById('croppedButtonContainer').appendChild(saveCroppedButton);
+
+        // Function to download image
+        function downloadImage(imageSrc, fileName) {
+            var link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = fileName;
+
+            // Simulate click event
+            var clickEvent = new MouseEvent('click', {
+                view: window,
+                bubbles: true,
+                cancelable: true
+            });
+            link.dispatchEvent(clickEvent);
+
+            // Cleanup
+            (window.URL || window.webkitURL).revokeObjectURL(link.href);
+        }
+    </script>
+</body>
+</html>
